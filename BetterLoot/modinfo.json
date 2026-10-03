@@ -1,0 +1,1689 @@
+{
+  "name": "Better Loot",
+  "author": "DeadSigma",
+  "description": "Better Loot spawning system",
+  "version": "0.1.0",
+  "license": "",
+  "icon": "icon.png",
+  "banner": "banner.png",
+  "gameVersion": "1.0",
+  "requiredByAllPlayers": true,
+  "updateUrl": "",
+  "isModPermanent": false,
+  "excludedFiles": [],
+  "modSettings": [
+    {
+      "type": "data",
+      "name": "__ConfigVersion",
+      "access": "both",
+      "default": {
+        "version": "0"
+      }
+    },
+    {
+      "type": "section",
+      "text": "---- On Water Loot Control",
+      "name": "OnWaterLootControl"
+    },
+    {
+      "name": "Disable Item Spawn",
+      "type": "checkbox",
+      "default": false,
+      "section": "OnWaterLootControl",
+      "access": "both"
+    },
+    {
+      "type": "slider",
+      "name": "Spawn Rate Percent",
+      "id": "Spawn Rate Percent",
+      "text": "Spawn Rate",
+      "section": "OnWaterLootControl",
+      "min": 0,
+      "max": 100,
+      "steps": 1,
+      "access": "both",
+      "default": 5
+    },
+    {
+      "type": "slider",
+      "name": "Min Spawn Distance",
+      "id": "Min Spawn Distance",
+      "section": "OnWaterLootControl",
+      "text": "Min Distance from Player",
+      "access": "both",
+      "range": {
+        "min": 0,
+        "max": 200,
+        "decimals": 0,
+        "type": "number"
+      },
+      "default": 85
+    },
+    {
+      "type": "slider",
+      "name": "Spawn Ring Width",
+      "id": "Spawn Ring Width",
+      "section": "OnWaterLootControl",
+      "text": "Spawn Outer Ring Width",
+      "access": "both",
+      "range": {
+        "min": 0,
+        "max": 100,
+        "decimals": 0,
+        "type": "number"
+      },
+      "default": 43
+    },
+    {
+      "type": "slider",
+      "name": "barrelSpawnChance",
+      "id": "barrelSpawnChance",
+      "text": "Barrel Spawn Chance (%)",
+      "section": "OnWaterLootControl",
+      "min": 0,
+      "max": 100,
+      "steps": 1,
+      "access": "both",
+      "default": 2
+    },
+    {
+      "type": "slider",
+      "name": "boxSpawnChance",
+      "id": "boxSpawnChance",
+      "text": "Box Spawn Chance (%)",
+      "section": "OnWaterLootControl",
+      "min": 0,
+      "max": 100,
+      "steps": 1,
+      "access": "both",
+      "default": 1
+    },
+    {
+      "name": "Clear Items",
+      "type": "button",
+      "section": "OnWaterLootControl",
+      "access": "both",
+      "text": "Clear Existing Loot",
+      "tooltip": "Removes all currently spawned floating loot. Host only"
+    },
+    {
+      "type": "section",
+      "text": "---- Underwater Loot Control",
+      "name": "UnderwaterLootControl"
+    },
+    {
+      "type": "slider",
+      "name": "claySpawnChance",
+      "text": "Clay Spawn Chance (%)",
+      "section": "UnderwaterLootControl",
+      "access": "both",
+      "default": 50,
+      "range": {
+        "min": 0,
+        "max": 100,
+        "decimals": 0,
+        "type": "number"
+      }
+    },
+    {
+      "type": "slider",
+      "name": "copperSpawnChance",
+      "text": "Copper Spawn Chance (%)",
+      "section": "UnderwaterLootControl",
+      "access": "both",
+      "default": 50,
+      "range": {
+        "min": 0,
+        "max": 100,
+        "decimals": 0,
+        "type": "number"
+      }
+    },
+    {
+      "type": "slider",
+      "name": "giantClamSpawnChance",
+      "section": "UnderwaterLootControl",
+      "text": "Giant Clam Spawn Chance (%)",
+      "access": "both",
+      "default": 50,
+      "range": {
+        "min": 0,
+        "max": 100,
+        "decimals": 0,
+        "type": "number"
+      }
+    },
+    {
+      "type": "slider",
+      "name": "ironSpawnChance",
+      "text": "Iron Spawn Chance (%)",
+      "section": "UnderwaterLootControl",
+      "access": "both",
+      "default": 50,
+      "range": {
+        "min": 0,
+        "max": 100,
+        "decimals": 0,
+        "type": "number"
+      }
+    },
+    {
+      "type": "slider",
+      "name": "rockSpawnChance",
+      "text": "Rock Spawn Chance (%)",
+      "section": "UnderwaterLootControl",
+      "access": "both",
+      "default": 50,
+      "range": {
+        "min": 0,
+        "max": 100,
+        "decimals": 0,
+        "type": "number"
+      }
+    },
+    {
+      "type": "slider",
+      "name": "sandSpawnChance",
+      "text": "Sand Spawn Chance (%)",
+      "section": "UnderwaterLootControl",
+      "access": "both",
+      "default": 50,
+      "range": {
+        "min": 0,
+        "max": 100,
+        "decimals": 0,
+        "type": "number"
+      }
+    },
+    {
+      "type": "slider",
+      "name": "scrapSpawnChance",
+      "text": "Scrap (Ocean Bottom) Spawn Chance (%)",
+      "section": "UnderwaterLootControl",
+      "access": "both",
+      "default": 50,
+      "range": {
+        "min": 0,
+        "max": 100,
+        "decimals": 0,
+        "type": "number"
+      }
+    },
+    {
+      "type": "section",
+      "text": "---- Barrels, Crates Loot Control",
+      "name": "lootControl"
+    },
+    {
+      "type": "checkbox",
+      "text": "Enable Loot Logging",
+      "name": "lootControl_logging",
+      "access": "globalcustom",
+      "default": false,
+      "section": "lootControl"
+    },
+    {
+      "type": "section",
+      "text": "-- Floating Barrel Loot",
+      "name": "barrelLoot",
+      "section": "lootControl"
+    },
+    {
+      "type": "input",
+      "text": "Minimum Items",
+      "name": "barrel_minItems",
+      "mode": "IntegerNumber",
+      "default": "4",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Maximum Items",
+      "name": "barrel_maxItems",
+      "mode": "IntegerNumber",
+      "default": "6",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "checkbox",
+      "text": "Replace Default Loot",
+      "name": "barrel_replace",
+      "default": false,
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Empty Bottle Drop %",
+      "name": "barrel_Empty_Bottle_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Empty Cup Drop %",
+      "name": "barrel_Empty_Cup_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Clay Bowl Drop %",
+      "name": "barrel_Clay_Bowl_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Drinking Glass Drop %",
+      "name": "barrel_Drinking_Glass_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Bucket Drop %",
+      "name": "barrel_Bucket_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Nail Drop %",
+      "name": "barrel_Nail_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Mango Seed Drop %",
+      "name": "barrel_Seed_Mango_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Pine Seed Drop %",
+      "name": "barrel_Seed_Pine_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Birch Seed Drop %",
+      "name": "barrel_Seed_Birch_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Pineapple Seed Drop %",
+      "name": "barrel_Seed_Pineapple_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Watermelon Seed Drop %",
+      "name": "barrel_Seed_Watermelon_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Strawberry Seed Drop %",
+      "name": "barrel_Seed_Strawberry_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Banana Seed Drop %",
+      "name": "barrel_Seed_Banana_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Palm Seed Drop %",
+      "name": "barrel_Seed_Palm_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Healing Salve Drop %",
+      "name": "barrel_Healing_Salve_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "input",
+      "text": "Good Healing Salve Drop %",
+      "name": "barrel_Good_Healing_Salve_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "barrelLoot"
+    },
+    {
+      "type": "section",
+      "text": "-- Floating Box Loot",
+      "name": "boxLoot",
+      "section": "lootControl"
+    },
+    {
+      "type": "input",
+      "text": "Minimum Items",
+      "name": "box_minItems",
+      "mode": "IntegerNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Maximum Items",
+      "name": "box_maxItems",
+      "mode": "IntegerNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "checkbox",
+      "text": "Replace Default Loot",
+      "name": "box_replace",
+      "default": false,
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Sand Drop %",
+      "name": "box_Sand_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Clay Drop %",
+      "name": "box_Clay_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Vine Goo Drop %",
+      "name": "box_Vine_Goo_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Empty Bottle Drop %",
+      "name": "box_Empty_Bottle_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Empty Cup Drop %",
+      "name": "box_Empty_Cup_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Clay Bowl Drop %",
+      "name": "box_Clay_Bowl_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Drinking Glass Drop %",
+      "name": "box_Drinking_Glass_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Bucket Drop %",
+      "name": "box_Bucket_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Bolt Drop %",
+      "name": "box_Bolt_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Nail Drop %",
+      "name": "box_Nail_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Mango Seed Drop %",
+      "name": "box_Seed_Mango_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Pine Seed Drop %",
+      "name": "box_Seed_Pine_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Birch Seed Drop %",
+      "name": "box_Seed_Birch_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Pineapple Seed Drop %",
+      "name": "box_Seed_Pineapple_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Watermelon Seed Drop %",
+      "name": "box_Seed_Watermelon_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Strawberry Seed Drop %",
+      "name": "box_Seed_Strawberry_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Banana Seed Drop %",
+      "name": "box_Seed_Banana_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Palm Seed Drop %",
+      "name": "box_Seed_Palm_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Healing Salve Drop %",
+      "name": "box_Healing_Salve_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "input",
+      "text": "Good Healing Salve Drop %",
+      "name": "box_Good_Healing_Salve_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "boxLoot"
+    },
+    {
+      "type": "section",
+      "text": "-- Crate Loot",
+      "name": "crateLoot",
+      "section": "lootControl"
+    },
+    {
+      "type": "input",
+      "text": "Minimum Items",
+      "name": "crate_minItems",
+      "mode": "IntegerNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Maximum Items",
+      "name": "crate_maxItems",
+      "mode": "IntegerNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "checkbox",
+      "text": "Replace Default Loot",
+      "name": "crate_replace",
+      "default": false,
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Sand Drop %",
+      "name": "crate_Sand_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Clay Drop %",
+      "name": "crate_Clay_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Glass Drop %",
+      "name": "crate_Glass_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Dry Brick Drop %",
+      "name": "crate_Brick_Dry_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Metal Ore Drop %",
+      "name": "crate_MetalOre_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Metal Ingot Drop %",
+      "name": "crate_MetalIngot_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Copper Ore Drop %",
+      "name": "crate_CopperOre_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Copper Ingot Drop %",
+      "name": "crate_CopperIngot_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Titanium Ore Drop %",
+      "name": "crate_Titanium_Ore_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Titanium Ingot Drop %",
+      "name": "crate_TitaniumIngot_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Vine Goo Drop %",
+      "name": "crate_VineGoo_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Sea Vine Drop %",
+      "name": "crate_SeaVine_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Feather Drop %",
+      "name": "crate_Feather_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Leather Drop %",
+      "name": "crate_Leather_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Wool Drop %",
+      "name": "crate_Wool_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Dirt Drop %",
+      "name": "crate_Dirt_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Explosive Goo Drop %",
+      "name": "crate_ExplosiveGoo_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Explosive Powder Drop %",
+      "name": "crate_ExplosivePowder_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Circuit Board Drop %",
+      "name": "crate_Circuit_Board_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Battery Drop %",
+      "name": "crate_Battery_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Biofuel Drop %",
+      "name": "crate_BioFuel_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Bolt Drop %",
+      "name": "crate_Bolt_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Hinge Drop %",
+      "name": "crate_Hinge_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Honeycomb Drop %",
+      "name": "crate_Honeycomb_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Honey Jar Drop %",
+      "name": "crate_Jar_Honey_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Trade Token Drop %",
+      "name": "crate_TradeToken_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Trash Cube Drop %",
+      "name": "crate_Trashcube_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Axe Drop %",
+      "name": "crate_Axe_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Stone Axe Drop %",
+      "name": "crate_Stone_Axe_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Titanium Axe Drop %",
+      "name": "crate_Axe_Titanium_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Hammer Drop %",
+      "name": "crate_Hammer_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Plastic Hook Drop %",
+      "name": "crate_Hook_Plastic_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Scrap Hook Drop %",
+      "name": "crate_Hook_Scrap_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Titanium Hook Drop %",
+      "name": "crate_Hook_Titanium_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Scrap Spear Drop %",
+      "name": "crate_Spear_Scrap_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Plank Spear Drop %",
+      "name": "crate_Spear_Plank_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Stone Arrow Drop %",
+      "name": "crate_Arrow_Stone_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Metal Arrow Drop %",
+      "name": "crate_Metal_Arrow_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Titanium Arrow Drop %",
+      "name": "crate_Titanium_Arrow_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Fishing Rod Drop %",
+      "name": "crate_Fishing_Rod_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Metal Fishing Rod Drop %",
+      "name": "crate_Metal_Fishing_Rod_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Paddle Drop %",
+      "name": "crate_Paddle_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Paint Brush Drop %",
+      "name": "crate_PaintBrush_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Shears Drop %",
+      "name": "crate_Shears_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Shovel Drop %",
+      "name": "crate_Shovel_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Sweep Net Drop %",
+      "name": "crate_SweepNet_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Net Canister Drop %",
+      "name": "crate_NetCanister_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Net Gun Drop %",
+      "name": "crate_NetGun_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Shark Bait Drop %",
+      "name": "crate_SharkBait_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Machete Drop %",
+      "name": "crate_Machete_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Metal Detector Drop %",
+      "name": "crate_Metal_Detector_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Titanium Sword Drop %",
+      "name": "crate_Sword_Titanium_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Throwable Anchor Drop %",
+      "name": "crate_ThrowableAnchor_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Bow Drop %",
+      "name": "crate_Bow_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Binoculars Drop %",
+      "name": "crate_Binoculars_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Compass Drop %",
+      "name": "crate_Compass_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Backpack Drop %",
+      "name": "crate_Backpack_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Leather Chest Armor Drop %",
+      "name": "crate_Equipment_LeatherChest_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Leather Helmet Drop %",
+      "name": "crate_Equipment_LeatherHelmet_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Leather Legs Armor Drop %",
+      "name": "crate_Equipment_LeatherLegs_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Flippers Drop %",
+      "name": "crate_Flippers_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Oxygen Bottle Drop %",
+      "name": "crate_Oxygen_Bottle_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Head Lamp Drop %",
+      "name": "crate_Head_Lamp_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Helmet Drop %",
+      "name": "crate_Helmet_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Body Armor Drop %",
+      "name": "crate_Body_Armor_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Greaves Drop %",
+      "name": "crate_Greaves_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Captain Hat Drop %",
+      "name": "crate_Hat_Captain_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Chef Hat Drop %",
+      "name": "crate_Hat_Chef_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Construction Hat Drop %",
+      "name": "crate_Hat_Construction_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Dev Hat Drop %",
+      "name": "crate_Hat_Dev_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Diving Hat Drop %",
+      "name": "crate_Hat_Diving_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Fishing Hat Drop %",
+      "name": "crate_Hat_Fishing_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Aviator Glasses Drop %",
+      "name": "crate_Hat_Glasses_Aviator_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Disguise Glasses Drop %",
+      "name": "crate_Hat_Glasses_Disguise_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Mayor Hat Drop %",
+      "name": "crate_Hat_Mayor_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Pilot Hat Drop %",
+      "name": "crate_Hat_Pilot_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Pirate Hat Drop %",
+      "name": "crate_Hat_Pirate_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Sailor Hat Drop %",
+      "name": "crate_Hat_Sailor_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Tiki Hat Drop %",
+      "name": "crate_Hat_Tiki_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Empty Canteen Drop %",
+      "name": "crate_Canteen_Empty_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Empty Plastic Bottle Drop %",
+      "name": "crate_PlasticBottle_Empty_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Empty Plastic Cup Drop %",
+      "name": "crate_PlasticCup_Empty_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Bucket Drop %",
+      "name": "crate_Bucket_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Empty Clay Bowl Drop %",
+      "name": "crate_Claybowl_Empty_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Drinking Glass Drop %",
+      "name": "crate_DrinkingGlass_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Good Healing Salve Drop %",
+      "name": "crate_HealingSalve_Good_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Simple Fishing Bait Drop %",
+      "name": "crate_FishingBait_Simple_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Advanced Fishing Bait Drop %",
+      "name": "crate_FishingBait_Advanced_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Expert Fishing Bait Drop %",
+      "name": "crate_FishingBait_Expert_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Battery Blueprint Drop %",
+      "name": "crate_Blueprint_Battery_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Headlight Blueprint Drop %",
+      "name": "crate_Blueprint_Headlight_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Machete Blueprint Drop %",
+      "name": "crate_Blueprint_Machete_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Engine Blueprint Drop %",
+      "name": "crate_Blueprint_Engine_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Steering Wheel Blueprint Drop %",
+      "name": "crate_Blueprint_Steering_Wheel_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Recycler Blueprint Drop %",
+      "name": "crate_Blueprint_Recycler_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Electric Purifier Blueprint Drop %",
+      "name": "crate_Blueprint_Electric_Purifier_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Electric Grill Blueprint Drop %",
+      "name": "crate_Blueprint_Electric_Grill_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Electric Smelter Blueprint Drop %",
+      "name": "crate_Blueprint_Electric_Smelter_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Titanium Tools Blueprint Drop %",
+      "name": "crate_Blueprint_Titanium_Tools_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Large Backpack Blueprint Drop %",
+      "name": "crate_Blueprint_Large_Backpack_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Zipline Blueprint Drop %",
+      "name": "crate_Blueprint_Zipline_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Wind Turbine Blueprint Drop %",
+      "name": "crate_Blueprint_Wind_Turbine_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Solar Panel Blueprint Drop %",
+      "name": "crate_Blueprint_Solar_Panel_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Electric Zipline Tool Blueprint Drop %",
+      "name": "crate_Blueprint_Electric_Zipline_Tool_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Zipline Tool Blueprint Drop %",
+      "name": "crate_Blueprint_Zipline_Tool_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Large Storage Blueprint Drop %",
+      "name": "crate_Blueprint_Large_Storage_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Water Pipe Blueprint Drop %",
+      "name": "crate_Blueprint_Water_Pipe_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Fuel Pipe Blueprint Drop %",
+      "name": "crate_Blueprint_Fuel_Pipe_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Metal Detector Blueprint Drop %",
+      "name": "crate_Blueprint_Metal_Detector_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Fuel Tank Blueprint Drop %",
+      "name": "crate_Blueprint_Fuel_Tank_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Firework Blueprint Drop %",
+      "name": "crate_Blueprint_Firework_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Engine Controls Blueprint Drop %",
+      "name": "crate_Blueprint_Engine_Controls_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Advanced Small Crop Plot Blueprint Drop %",
+      "name": "crate_Blueprint_Advanced_Small_Crop_Plot_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Biofuel Refiner Blueprint Drop %",
+      "name": "crate_Blueprint_Biofuel_Refiner_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Battery Charger Blueprint Drop %",
+      "name": "crate_Blueprint_Battery_Charger_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Advanced Head Light Blueprint Drop %",
+      "name": "crate_Blueprint_Advanced_Head_Light_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Advanced Medium Crop Plot Blueprint Drop %",
+      "name": "crate_Blueprint_Advanced_Medium_Crop_Plot_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Advanced Large Crop Plot Blueprint Drop %",
+      "name": "crate_Blueprint_Advanced_Large_Crop_Plot_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Canteen Blueprint Drop %",
+      "name": "crate_Blueprint_Canteen_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Advanced Battery Blueprint Drop %",
+      "name": "crate_Blueprint_Advanced_Battery_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Advanced Stationary Anchor Blueprint Drop %",
+      "name": "crate_Blueprint_Advanced_Stationary_Anchor_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Antenna Blueprint Drop %",
+      "name": "crate_Blueprint_Antenna_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Biofuel Extractor Blueprint Drop %",
+      "name": "crate_Blueprint_Biofuel_Extractor_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Advanced Biofuel Extractor Blueprint Drop %",
+      "name": "crate_Blueprint_Biofuel_Extractor_Advanced_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Detail Plank Blueprint Drop %",
+      "name": "crate_Blueprint_DetailPlank_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Motor Wheel Blueprint Drop %",
+      "name": "crate_Blueprint_MotorWheel_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Receiver Blueprint Drop %",
+      "name": "crate_Blueprint_Reciever_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Water Tank Blueprint Drop %",
+      "name": "crate_Blueprint_WaterTank_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Zipline Base Blueprint Drop %",
+      "name": "crate_Blueprint_ZiplineBase_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Silver Algae Drop %",
+      "name": "crate_SilverAlgae_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Classical Cassette Drop %",
+      "name": "crate_Cassette_Classical_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "EDM Cassette Drop %",
+      "name": "crate_Cassette_EDM_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Elevator Cassette Drop %",
+      "name": "crate_Cassette_Elevator_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Pop Cassette Drop %",
+      "name": "crate_Cassette_Pop_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Rock Cassette Drop %",
+      "name": "crate_Cassette_Rock_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    },
+    {
+      "type": "input",
+      "text": "Trading Post Cassette Drop %",
+      "name": "crate_Cassette_TradingPost_percentage",
+      "mode": "DecimalNumber",
+      "default": "1",
+      "section": "crateLoot"
+    }
+  ]
+}
