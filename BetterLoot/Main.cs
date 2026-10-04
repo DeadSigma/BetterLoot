@@ -160,7 +160,7 @@ public class BetterLootAndUnderwaterResources : Mod
             }
             else
             {
-                Delay = 1.0f / (globalRatePercent / 1.0f);
+                Delay = 100.0f / globalRatePercent;
                 if (Delay < 0.00001f) Delay = 0.00001f;
             }
         }
