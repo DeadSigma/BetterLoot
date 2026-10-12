@@ -16,8 +16,10 @@ public class BetterLootAndUnderwaterResources : Mod
     Harmony harmonyBetterLoot;
     static public JsonModInfo modInfo;
 
-    static public float Delay;
+    static public float Delay = 1f;
     static public bool Check;
+    public const string SettingVanillaLootSystem = "Enable Vanilla Loot System";
+    public static bool EnableVanillaLootSystem;
     static public float clumpSpawnDistanceUpward = -1f;
     static public float minSpawnDistanceFromPlayer = 200f;
     static public float spawnRingWidth = 10f;
@@ -26,8 +28,8 @@ public class BetterLootAndUnderwaterResources : Mod
     public const string SettingBoxSpawnChance = "boxSpawnChance";
 
 
-    public static float barrelSpawnChancePercentage = 5f;
-    public static float boxSpawnChancePercentage = 5f;
+    public static float barrelSpawnChancePercentage = 2f;
+    public static float boxSpawnChancePercentage = 1f;
 
     public const string SettingClayChance = "claySpawnChance";
     public const string SettingCopperChance = "copperSpawnChance";
@@ -40,9 +42,6 @@ public class BetterLootAndUnderwaterResources : Mod
     public static bool ExtraSettingsAPI_Loaded = false;
     public static bool EnableGlobalLogging = false;
 
-    private const int CurrentSettingsVersion = 2;
-    private const string SettingsVersionData = "__ConfigVersion";
-    private const string SettingsVersionKey = "version";
     public static readonly BetterRaft.LootControl.DropperManager DropperManager = new BetterRaft.LootControl.DropperManager("Loot_Manager.json");
 
     public void Start()
@@ -53,7 +52,7 @@ public class BetterLootAndUnderwaterResources : Mod
         BetterLoot_Component.originalItemSpawnChances = new System.Collections.Generic.Dictionary<SpawnableFloatingObject, float>();
 
         GetBetterLootSettings();
-        BetterLoot_Component.ModifyCurrentSettings();
+        BetterLoot_Component.ApplyCurrentSpawnRate();
         BetterLoot_Component.ApplyAllIndividualSpawnChanceSettings();
 
         harmonyBetterLoot =
@@ -89,16 +88,22 @@ public class BetterLootAndUnderwaterResources : Mod
 
         if (BetterLoot_Component.scheduleCheck)
         {
-            GetBetterLootSettings();
-            BetterLoot_Component.ModifyCurrentSettings();
-            BetterLoot_Component.ApplyAllIndividualSpawnChanceSettings();
             BetterLoot_Component.scheduleCheck = false;
+            if (!EnableVanillaLootSystem)
+            {
+                BetterLoot_Component.RefreshSpawnChancesIfNeeded();
+                BetterLoot_Component.ApplyCurrentSpawnRate();
+            }
         }
+
+        BetterLoot_Component.UpdateSpawnRateDiagnostics();
     }
 
     public void OnModUnload()
     {
-        BetterLoot_Component.UnmodifyAll();
+        BetterLoot_Component.scheduleCheck = false;
+        BetterLoot_Component.RestoreVanillaSurfaceSpawning(false);
+        BetterLoot_Component.ResetSpawnRateTracking();
         BetterLoot_Component.UnpatchDynamicOceanCompatibility();
 
         if (harmonyBetterLoot != null)
@@ -123,11 +128,11 @@ public class BetterLootAndUnderwaterResources : Mod
 
     public override void WorldEvent_WorldLoaded()
     {
-        Patch_UnderwaterSpawns.UpdateSpawnChances();
-
         GetBetterLootSettings();
-        BetterLoot_Component.ModifyCurrentSettings();
+        BetterLoot_Component.ResetSpawnRateDiagnostics();
+        BetterLoot_Component.ApplyCurrentSpawnRate(true);
         BetterLoot_Component.ApplyAllIndividualSpawnChanceSettings();
+        Patch_UnderwaterSpawns.UpdateSpawnChances();
         BetterLoot_Component.TryPatchDynamicOceanCompatibility();
     }
 
@@ -135,164 +140,132 @@ public class BetterLootAndUnderwaterResources : Mod
     public static void WarningLog(object message) { Debug.LogWarning("[" + modInfo.name + "]: " + message.ToString()); }
     public static new void Log(object message) { Debug.Log("[" + modInfo.name + "]: " + message.ToString()); }
 
-    public void GetBetterLootSettings()
+    private float GetSpawnRatePercent()
     {
-        if (!ExtraSettingsAPI_Loaded) { return; }
-
-        float globalRatePercent = ExtraSettingsAPI_GetSliderValue("Spawn Rate Percent");
-        bool currentGlobalDisableCheckbox = ExtraSettingsAPI_GetCheckboxState("Disable Item Spawn");
-
-        if (Mathf.Approximately(globalRatePercent, 0f))
-        {
-            Check = true;
-            Delay = float.PositiveInfinity;
-            if (!currentGlobalDisableCheckbox)
-            {
-                ExtraSettingsAPI_SetCheckboxState("Disable Item Spawn", true);
-            }
-        }
-        else
-        {
-            Check = currentGlobalDisableCheckbox;
-            if (Check)
-            {
-                Delay = float.PositiveInfinity;
-            }
-            else
-            {
-                Delay = 100.0f / globalRatePercent;
-                if (Delay < 0.00001f) Delay = 0.00001f;
-            }
-        }
         try
         {
-            minSpawnDistanceFromPlayer = ExtraSettingsAPI_GetSliderValue("Min Spawn Distance");
-            if (minSpawnDistanceFromPlayer < 0f) minSpawnDistanceFromPlayer = 0f;
-        }
-        catch (Exception)
-        {
-            minSpawnDistanceFromPlayer = 0f;
-        }
-        try
-        {
-            spawnRingWidth = ExtraSettingsAPI_GetSliderValue("Spawn Ring Width");
-            if (spawnRingWidth < 0f) spawnRingWidth = 0f;
-        }
-        catch (Exception)
-        {
-            spawnRingWidth = 50f;
-        }
-
-
-
-        try
-        {
-            barrelSpawnChancePercentage = ExtraSettingsAPI_GetSliderValue(SettingBarrelSpawnChance);
-            if (barrelSpawnChancePercentage > 0f)
-            {
-                barrelSpawnChancePercentage /= 10.0f;
-            }
-            if (barrelSpawnChancePercentage < 0f) barrelSpawnChancePercentage = 0f;
-            if (barrelSpawnChancePercentage > 100f) barrelSpawnChancePercentage = 100f;
+            return ExtraSettingsAPI_GetSliderValue("Spawn Rate Percent");
         }
         catch (Exception ex)
         {
-            WarningLog($"Failed to get '{SettingBarrelSpawnChance}' from ExtraSettingsAPI: {ex.Message}. Using default/current value: {barrelSpawnChancePercentage}%.");
+            WarningLog("Failed to read 'Spawn Rate Percent': " + ex.Message);
+            return 5f;
         }
-
-        try
-        {
-            boxSpawnChancePercentage = ExtraSettingsAPI_GetSliderValue(SettingBoxSpawnChance);
-            if (boxSpawnChancePercentage > 0f)
-            {
-                boxSpawnChancePercentage /= 10.0f;
-            }
-            if (boxSpawnChancePercentage < 0f) boxSpawnChancePercentage = 0f;
-            if (boxSpawnChancePercentage > 100f) boxSpawnChancePercentage = 100f;
-        }
-        catch (Exception ex)
-        {
-            WarningLog($"Failed to get '{SettingBoxSpawnChance}' from ExtraSettingsAPI: {ex.Message}. Using default/current value: {boxSpawnChancePercentage}%.");
-        }
-        if (EnableGlobalLogging) Log($"Barrel Chance (after division): {barrelSpawnChancePercentage}%, Box Chance (after division): {boxSpawnChancePercentage}%");
     }
 
-    public void ExtraSettingsAPI_SettingsClose()
+    public void GetBetterLootSettings()
+    {
+        if (!ExtraSettingsAPI_Loaded)
+            return;
+
+        float globalRatePercent = GetSpawnRatePercent();
+        EnableVanillaLootSystem = ExtraSettingsAPI_GetCheckboxState(SettingVanillaLootSystem);
+
+        if (float.IsNaN(globalRatePercent) || float.IsInfinity(globalRatePercent))
+            globalRatePercent = 100f;
+        globalRatePercent = Mathf.Clamp(globalRatePercent, 0f, 500f);
+
+        // Нулевой процент отключает только модовый спавн, но не ванильный
+        Check = !EnableVanillaLootSystem && globalRatePercent <= 0f;
+        Delay = EnableVanillaLootSystem || globalRatePercent <= 0f
+            ? 1f
+            : Mathf.Max(0.01f, 100f / globalRatePercent);
+
+        try
+        {
+            minSpawnDistanceFromPlayer = Mathf.Max(0f, ExtraSettingsAPI_GetSliderValue("Min Spawn Distance"));
+        }
+        catch (Exception)
+        {
+            minSpawnDistanceFromPlayer = 85f;
+        }
+
+        try
+        {
+            spawnRingWidth = Mathf.Max(0f, ExtraSettingsAPI_GetSliderValue("Spawn Ring Width"));
+        }
+        catch (Exception)
+        {
+            spawnRingWidth = 43f;
+        }
+
+        try
+        {
+            barrelSpawnChancePercentage = Mathf.Clamp(ExtraSettingsAPI_GetSliderValue(SettingBarrelSpawnChance), 0f, 100f);
+        }
+        catch (Exception ex)
+        {
+            WarningLog("Failed to read '" + SettingBarrelSpawnChance + "': " + ex.Message);
+        }
+
+        try
+        {
+            boxSpawnChancePercentage = Mathf.Clamp(ExtraSettingsAPI_GetSliderValue(SettingBoxSpawnChance), 0f, 100f);
+        }
+        catch (Exception ex)
+        {
+            WarningLog("Failed to read '" + SettingBoxSpawnChance + "': " + ex.Message);
+        }
+
+        if (EnableGlobalLogging)
+            Log($"Loot mode: {(EnableVanillaLootSystem ? "Vanilla" : "Modded")}, spawn rate: {globalRatePercent:F0}%, disabled: {Check}, delay: {Delay:F4}, barrel: {barrelSpawnChancePercentage:F0}%, box: {boxSpawnChancePercentage:F0}%");
+    }
+
+    private float lastAppliedRate = float.NaN;
+    private bool lastAppliedDisabled;
+    private bool lastAppliedVanilla;
+
+    private void ApplyExtraSettings()
     {
         GetBetterLootSettings();
-        BetterLoot_Component.RemodifyAll();
-        BetterLoot_Component.ApplyAllIndividualSpawnChanceSettings();
-        ExtraSettingsAPI_SaveSettings();
+        float newRate = Check ? 0f : 100f / Mathf.Max(0.01f, Delay);
+        bool changed = float.IsNaN(lastAppliedRate) ||
+                       !Mathf.Approximately(lastAppliedRate, newRate) ||
+                       lastAppliedDisabled != Check ||
+                       lastAppliedVanilla != EnableVanillaLootSystem;
+        lastAppliedRate = newRate;
+        lastAppliedDisabled = Check;
+        lastAppliedVanilla = EnableVanillaLootSystem;
+        if (changed)
+            Debug.Log($"[BetterLoot][LootSystem] {(EnableVanillaLootSystem ? "VANILLA" : "MODDED")} | rate={newRate:F0}% | factor={Delay:F3} | host={Raft_Network.IsHost} | disabled={Check}");
 
+        BetterLoot_Component.ApplyCurrentSpawnRate(changed);
+        BetterLoot_Component.ApplyAllIndividualSpawnChanceSettings();
         Patch_UnderwaterSpawns.UpdateSpawnChances();
 
         EnableGlobalLogging = ExtraSettingsAPI_GetCheckboxState("lootControl_logging");
-        if (EnableGlobalLogging)
-            Log($"[BetterLootAndUnderwaterResources] Global Logging set to: {EnableGlobalLogging}");
 
         UpdateDropperSettings("Pickup_Floating_Barrel", "barrel");
         UpdateDropperSettings("Pickup_Floating_Box", "box");
         UpdateDropperSettings("Pickup_Landmark_LandmarkCrateRaft", "crate");
     }
 
-    private void EnsureExtraSettingsVersion()
+    public void ExtraSettingsAPI_SettingsClose()
     {
-        string savedVersion =
-            ExtraSettingsAPI_GetDataValue(
-                SettingsVersionData,
-                SettingsVersionKey
-            );
-
-        int version;
-
-        if (!int.TryParse(
-                savedVersion,
-                NumberStyles.Integer,
-                CultureInfo.InvariantCulture,
-                out version))
-        {
-            version = 0;
-        }
-
-        if (version == CurrentSettingsVersion)
-            return;
-
-        ExtraSettingsAPI_ResetAllSettings();
-
-        ExtraSettingsAPI_SetDataValue(
-            SettingsVersionData,
-            SettingsVersionKey,
-            CurrentSettingsVersion.ToString(
-                CultureInfo.InvariantCulture
-            )
-        );
-
-        ExtraSettingsAPI_SaveSettings();
-
-        Log(
-            "[BetterLootAndUnderwaterResources] Extra Settings reset for config version " +
-            CurrentSettingsVersion
-        );
+        ApplyExtraSettings();
     }
 
     public void ExtraSettingsAPI_Load()
     {
         ExtraSettingsAPI_Loaded = true;
-        EnsureExtraSettingsVersion();
-        GetBetterLootSettings();
-        BetterLoot_Component.RemodifyAll();
-        BetterLoot_Component.ApplyAllIndividualSpawnChanceSettings();
-        Patch_UnderwaterSpawns.UpdateSpawnChances();
+        // Настройки уже загружены API, повторный сброс и сохранение не нужны
+        ApplyExtraSettings();
+    }
 
-
-
-        ExtraSettingsAPI_SettingsClose();
+    public void ExtraSettingsAPI_WorldLoad()
+    {
+        if (ExtraSettingsAPI_Loaded)
+            ApplyExtraSettings();
     }
 
     public void ExtraSettingsAPI_Unload()
     {
         ExtraSettingsAPI_Loaded = false;
-        BetterLoot_Component.UnmodifyAll();
+        BetterLoot_Component.RestoreVanillaSurfaceSpawning(false);
+        EnableVanillaLootSystem = false;
+        Check = false;
+        Delay = 1f;
+        BetterLoot_Component.ResetSpawnRateTracking();
     }
 
     public void ExtraSettingsAPI_ButtonPress(string name)
@@ -404,40 +377,14 @@ public class BetterLootAndUnderwaterResources : Mod
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static void ExtraSettingsAPI_SaveSettings()
-    {
-        if (ExtraSettingsAPI_Loaded && EnableGlobalLogging) LogError("API SaveSettings stub called");
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    public static string ExtraSettingsAPI_GetDataValue(
-        string SettingName,
-        string SubName)
-    {
-        return "";
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    public static void ExtraSettingsAPI_SetDataValue(
-        string SettingName,
-        string SubName,
-        string Value)
-    {
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    public static void ExtraSettingsAPI_ResetAllSettings()
-    {
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
     public static float ExtraSettingsAPI_GetSliderValue(string SettingName)
     {
         if (ExtraSettingsAPI_Loaded && EnableGlobalLogging) LogError("API GetSliderValue stub called for " + SettingName);
-        if (SettingName == "Spawn Rate Percent") return 100f;
-        if (SettingName == "Spawn Ring Width") return 50f;
-        if (SettingName == SettingBarrelSpawnChance) return 10f;
-        if (SettingName == SettingBoxSpawnChance) return 5f;
+        if (SettingName == "Spawn Rate Percent") return 5f;
+        if (SettingName == "Min Spawn Distance") return 85f;
+        if (SettingName == "Spawn Ring Width") return 43f;
+        if (SettingName == SettingBarrelSpawnChance) return 2f;
+        if (SettingName == SettingBoxSpawnChance) return 1f;
         return 0f;
     }
 

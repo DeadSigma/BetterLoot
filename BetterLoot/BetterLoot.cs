@@ -23,12 +23,257 @@ public class BetterLoot_Component
     {
         get
         {
-            return BetterLootAndUnderwaterResources.Check ? float.PositiveInfinity : BetterLootAndUnderwaterResources.Delay;
+            return BetterLootAndUnderwaterResources.Delay;
         }
+    }
+
+    private sealed class SpawnerTimingState
+    {
+        public ObjectSpawnerAssetSettings Settings;
+        public float AppliedFactor = 1f;
+    }
+
+    private sealed class SpawnDiagnostics
+    {
+        public int BatchCalls;
+        public int BlockedCalls;
+        public int ItemCalls;
+    }
+
+    private static readonly Dictionary<ObjectSpawner_RaftDirection, SpawnerTimingState> timingStates =
+        new Dictionary<ObjectSpawner_RaftDirection, SpawnerTimingState>();
+    private static readonly Dictionary<uint, SpawnDiagnostics> spawnDiagnostics =
+        new Dictionary<uint, SpawnDiagnostics>();
+    private static float nextDiagnosticsAt;
+    private static float diagnosticsUntil;
+
+    public static void ResetSpawnRateTracking()
+    {
+        timingStates.Clear();
+        ResetSpawnRateDiagnostics();
+    }
+
+    public static void ResetSpawnRateDiagnostics()
+    {
+        spawnDiagnostics.Clear();
+        nextDiagnosticsAt = 0f;
+        diagnosticsUntil = 0f;
+    }
+
+    public static void ApplyCurrentSpawnRate(bool detailedLog = false)
+    {
+        if (BetterLootAndUnderwaterResources.EnableVanillaLootSystem)
+        {
+            RestoreVanillaSurfaceSpawning(detailedLog);
+            return;
+        }
+
+        if (!Raft_Network.IsHost)
+        {
+            if (detailedLog)
+                Log("[SpawnRate] CLIENT - изменение интервалов выполняется на стороне хоста");
+            return;
+        }
+
+        ObjectSpawnerManager manager = ComponentManager<ObjectSpawnerManager>.Value;
+        if (manager == null)
+        {
+            if (detailedLog)
+                Log("[SpawnRate] ObjectSpawnerManager ещё не создан - настройка будет применена после загрузки мира");
+            return;
+        }
+
+        ApplyToSpawner(manager.plankSpawner, "Planks", detailedLog);
+        ApplyToSpawner(manager.itemSpawner, "Items", detailedLog);
+
+        if (detailedLog)
+        {
+            diagnosticsUntil = Time.realtimeSinceStartup + 120f;
+            nextDiagnosticsAt = Time.realtimeSinceStartup + 10f;
+        }
+    }
+
+    public static void RestoreVanillaSurfaceSpawning(bool detailedLog)
+    {
+        int restoredSpawners = 0;
+        if (Raft_Network.IsHost)
+        {
+            foreach (var pair in timingStates)
+            {
+                ObjectSpawner_RaftDirection spawner = pair.Key;
+                SpawnerTimingState state = pair.Value;
+                if (spawner == null || state == null || state.Settings == null)
+                    continue;
+
+                try
+                {
+                    var tr = Traverse.Create(spawner);
+                    var currentSettings = tr.Field("currentSettings").GetValue<ObjectSpawnerAssetSettings>();
+                    if (!ReferenceEquals(currentSettings, state.Settings))
+                        continue;
+
+                    float factor = Mathf.Max(0.01f, state.AppliedFactor);
+                    var delayField = tr.Field("spawnDelay");
+                    float remaining = delayField.GetValue<float>();
+                    if (remaining > 0f && !float.IsNaN(remaining) && !float.IsInfinity(remaining))
+                        delayField.SetValue(Mathf.Max(0.05f, remaining / factor));
+                    restoredSpawners++;
+                }
+                catch (Exception ex)
+                {
+                    WarningLog("[LootSystem] Не удалось восстановить таймер ванильного спавна: " + ex.Message);
+                }
+            }
+        }
+
+        int intervals = editedValues != null ? editedValues.Count : 0;
+        int chances = originalItemSpawnChances != null ? originalItemSpawnChances.Count : 0;
+        UnmodifyAll();
+        timingStates.Clear();
+
+        if (detailedLog)
+            Log($"[LootSystem] VANILLA restored | timers={restoredSpawners} | intervals={intervals} | item chances={chances} | position override=off | DynamicOcean override=off");
+    }
+
+    private static void ApplyToSpawner(ObjectSpawner_RaftDirection spawner, string name, bool detailedLog)
+    {
+        if (spawner == null)
+        {
+            if (detailedLog)
+                Log("[SpawnRate] " + name + " - спавнер ещё не создан");
+            return;
+        }
+
+        try
+        {
+            var traverse = Traverse.Create(spawner);
+            var settings = traverse.Field("currentSettings").GetValue<ObjectSpawnerAssetSettings>();
+            if (settings == null)
+            {
+                if (detailedLog)
+                    Log("[SpawnRate] " + name + " - currentSettings=null");
+                return;
+            }
+
+            SpawnerTimingState state;
+            bool registered = timingStates.TryGetValue(spawner, out state);
+            bool newSettings = !registered || !ReferenceEquals(state.Settings, settings);
+            float oldFactor = newSettings ? 1f : state.AppliedFactor;
+            float newFactor = Mathf.Clamp(multiplier, 0.01f, 1000f);
+            bool factorChanged = newSettings || !Mathf.Approximately(oldFactor, newFactor);
+
+            ModifySettings(settings);
+
+            float previousTimer = 0f;
+            float updatedTimer = 0f;
+            if (factorChanged)
+            {
+                var delayField = traverse.Field("spawnDelay");
+                previousTimer = delayField.GetValue<float>();
+                updatedTimer = previousTimer;
+                if (!float.IsNaN(previousTimer) && !float.IsInfinity(previousTimer) && previousTimer > 0f)
+                {
+                    updatedTimer = Mathf.Max(0.05f, previousTimer * newFactor / oldFactor);
+                    delayField.SetValue(updatedTimer);
+                }
+            }
+
+            if (!registered)
+                timingStates[spawner] = state = new SpawnerTimingState();
+            state.Settings = settings;
+            state.AppliedFactor = newFactor;
+
+            if (detailedLog)
+            {
+                var original = editedValues[settings];
+                float timer = traverse.Field("spawnDelay").GetValue<float>();
+                Log(string.Format(CultureInfo.InvariantCulture,
+                    "[SpawnRate] {0} id={1} | base={2:F2}-{3:F2}s | effective={4:F2}-{5:F2}s | timer={6:F2}s | scale={7:F3} | previousTimer={8:F2}s | newTimer={9:F2}s",
+                    name, spawner.UniqueIndex, original.Item1, original.Item2,
+                    settings.spawnRateInterval.minValue, settings.spawnRateInterval.maxValue,
+                    timer, newFactor, previousTimer, updatedTimer));
+            }
+        }
+        catch (Exception ex)
+        {
+            WarningLog("[SpawnRate] " + name + " - не удалось применить интервал: " + ex.Message);
+        }
+    }
+
+    public static void RecordBatchCall(ObjectSpawner_RaftDirection spawner, bool allowed)
+    {
+        if (spawner == null || !Raft_Network.IsHost)
+            return;
+
+        SpawnDiagnostics stats;
+        if (!spawnDiagnostics.TryGetValue(spawner.UniqueIndex, out stats))
+            spawnDiagnostics[spawner.UniqueIndex] = stats = new SpawnDiagnostics();
+        stats.BatchCalls++;
+        if (!allowed)
+            stats.BlockedCalls++;
+    }
+
+    public static void RecordItemCall(ObjectSpawner spawner)
+    {
+        if (spawner == null || !Raft_Network.IsHost)
+            return;
+        SpawnDiagnostics stats;
+        if (!spawnDiagnostics.TryGetValue(spawner.UniqueIndex, out stats))
+            spawnDiagnostics[spawner.UniqueIndex] = stats = new SpawnDiagnostics();
+        stats.ItemCalls++;
+    }
+
+    public static void UpdateSpawnRateDiagnostics()
+    {
+        float now = Time.realtimeSinceStartup;
+        if ((!BetterLootAndUnderwaterResources.EnableGlobalLogging && now > diagnosticsUntil) ||
+            now < nextDiagnosticsAt || !Raft_Network.IsHost)
+            return;
+
+        nextDiagnosticsAt = now + 15f;
+        ObjectSpawnerManager manager = ComponentManager<ObjectSpawnerManager>.Value;
+        if (manager == null)
+        {
+            Log("[SpawnRate] DIAG - ObjectSpawnerManager отсутствует");
+            return;
+        }
+        LogSpawnerDiagnostics(manager.plankSpawner, "Planks");
+        LogSpawnerDiagnostics(manager.itemSpawner, "Items");
+    }
+
+    private static void LogSpawnerDiagnostics(ObjectSpawner_RaftDirection spawner, string name)
+    {
+        if (spawner == null)
+        {
+            Log("[SpawnRate] DIAG " + name + " - отсутствует");
+            return;
+        }
+        SpawnDiagnostics stats;
+        if (!spawnDiagnostics.TryGetValue(spawner.UniqueIndex, out stats))
+            spawnDiagnostics[spawner.UniqueIndex] = stats = new SpawnDiagnostics();
+        try
+        {
+            var tr = Traverse.Create(spawner);
+            var settings = tr.Field("currentSettings").GetValue<ObjectSpawnerAssetSettings>();
+            float timer = tr.Field("spawnDelay").GetValue<float>();
+            Log(string.Format(CultureInfo.InvariantCulture,
+                "[SpawnRate] DIAG {0} id={1} | batches={2} | blocked={3} | SpawnItem={4} | spawnDelay={5:F2}s | interval={6} | disabled={7}",
+                name, spawner.UniqueIndex, stats.BatchCalls, stats.BlockedCalls, stats.ItemCalls,
+                timer, settings != null
+                    ? string.Format(CultureInfo.InvariantCulture, "{0:F2}-{1:F2}s", settings.spawnRateInterval.minValue, settings.spawnRateInterval.maxValue)
+                    : "null", BetterLootAndUnderwaterResources.Check) +
+                " | mode=" + (BetterLootAndUnderwaterResources.EnableVanillaLootSystem ? "Vanilla" : "Modded"));
+        }
+        catch (Exception ex)
+        {
+            WarningLog("[SpawnRate] DIAG " + name + " - " + ex.Message);
+        }
+        stats.BatchCalls = stats.BlockedCalls = stats.ItemCalls = 0;
     }
 
     private static string GetCurrentGlobalRateString()
     {
+        if (BetterLootAndUnderwaterResources.EnableVanillaLootSystem) return "Vanilla";
         if (BetterLootAndUnderwaterResources.Check || float.IsPositiveInfinity(BetterLootAndUnderwaterResources.Delay)) return "0% (Disabled / Off)";
         float percentage = (BetterLootAndUnderwaterResources.Delay > 0.0000001f) ? (100.0f / BetterLootAndUnderwaterResources.Delay) : 0f;
         if (Mathf.Approximately(percentage, 0f) || float.IsInfinity(percentage)) return "Effectively 0% (Extremely high delay or rate too high)";
@@ -52,8 +297,17 @@ public class BetterLoot_Component
     }
 
 
+    private static float SafeInterval(float baseValue, float factor)
+    {
+        float result = baseValue * factor;
+        if (float.IsNaN(result) || float.IsInfinity(result))
+            return Mathf.Max(0.05f, baseValue);
+        return Mathf.Max(0.05f, result);
+    }
+
     public static void ModifyCurrentSettings()
     {
+        if (BetterLootAndUnderwaterResources.EnableVanillaLootSystem) return;
         var manager = ComponentManager<ObjectSpawnerManager>.Value;
         if (manager != null)
             foreach (var objectSpawner in new ObjectSpawner_RaftDirection[] { manager.plankSpawner, manager.itemSpawner })
@@ -63,13 +317,14 @@ public class BetterLoot_Component
 
     public static void ModifySettings(ObjectSpawnerAssetSettings set)
     {
+        if (BetterLootAndUnderwaterResources.EnableVanillaLootSystem) return;
         if (set == null) { return; }
         if (editedValues == null) { editedValues = new Dictionary<ObjectSpawnerAssetSettings, (float, float)>(); }
         if (!editedValues.ContainsKey(set))
         {
             editedValues.Add(set, (set.spawnRateInterval.minValue, set.spawnRateInterval.maxValue));
-            set.spawnRateInterval.minValue *= multiplier;
-            set.spawnRateInterval.maxValue *= multiplier;
+            set.spawnRateInterval.minValue = SafeInterval(set.spawnRateInterval.minValue, multiplier);
+            set.spawnRateInterval.maxValue = SafeInterval(set.spawnRateInterval.maxValue, multiplier);
         }
         else
         {
@@ -79,21 +334,23 @@ public class BetterLoot_Component
 
     public static void RemodifySettings(ObjectSpawnerAssetSettings set)
     {
+        if (BetterLootAndUnderwaterResources.EnableVanillaLootSystem) return;
         if (editedValues != null && editedValues.ContainsKey(set))
         {
-            set.spawnRateInterval.minValue = editedValues[set].Item1 * multiplier;
-            set.spawnRateInterval.maxValue = editedValues[set].Item2 * multiplier;
+            set.spawnRateInterval.minValue = SafeInterval(editedValues[set].Item1, multiplier);
+            set.spawnRateInterval.maxValue = SafeInterval(editedValues[set].Item2, multiplier);
         }
     }
 
     public static void RemodifyAll()
     {
+        if (BetterLootAndUnderwaterResources.EnableVanillaLootSystem) return;
         if (editedValues == null || editedValues.Count <= 0) { return; }
         foreach (var pair in editedValues)
         {
             if (pair.Key == null) continue;
-            pair.Key.spawnRateInterval.minValue = pair.Value.Item1 * multiplier;
-            pair.Key.spawnRateInterval.maxValue = pair.Value.Item2 * multiplier;
+            pair.Key.spawnRateInterval.minValue = SafeInterval(pair.Value.Item1, multiplier);
+            pair.Key.spawnRateInterval.maxValue = SafeInterval(pair.Value.Item2, multiplier);
         }
         var spawnerManager = ComponentManager<ObjectSpawnerManager>.Value;
         if (spawnerManager != null)
@@ -109,6 +366,7 @@ public class BetterLoot_Component
 
     public static void ApplyIndividualSpawnChanceSettings(ObjectSpawner spawner)
     {
+        if (BetterLootAndUnderwaterResources.EnableVanillaLootSystem) return;
         if (spawner == null || spawner.spawnableObjects == null)
         {
             if (BetterLootAndUnderwaterResources.EnableGlobalLogging) Log($"ApplyIndividualSpawnChanceSettings: Spawner or spawnableObjects list is null for spawner: {(spawner != null ? spawner.ToString() : "Unknown")}. Skipping.");
@@ -183,6 +441,7 @@ public class BetterLoot_Component
 
     public static void ApplyAllIndividualSpawnChanceSettings()
     {
+        if (BetterLootAndUnderwaterResources.EnableVanillaLootSystem) return;
         var manager = ComponentManager<ObjectSpawnerManager>.Value;
         if (manager != null)
         {
@@ -192,6 +451,30 @@ public class BetterLoot_Component
         else
         {
             if (BetterLootAndUnderwaterResources.EnableGlobalLogging) WarningLog("ApplyAllIndividualSpawnChanceSettings: ObjectSpawnerManager not found.");
+        }
+    }
+
+    public static void RefreshSpawnChancesIfNeeded()
+    {
+        if (BetterLootAndUnderwaterResources.EnableVanillaLootSystem) return;
+        var manager = ComponentManager<ObjectSpawnerManager>.Value;
+        if (manager == null)
+            return;
+
+        foreach (ObjectSpawner spawner in new ObjectSpawner[] { manager.itemSpawner, manager.plankSpawner })
+        {
+            if (spawner == null || spawner.spawnableObjects == null)
+                continue;
+
+            foreach (SpawnableFloatingObject item in spawner.spawnableObjects)
+            {
+                if (item != null &&
+                    (originalItemSpawnChances == null || !originalItemSpawnChances.ContainsKey(item)))
+                {
+                    ApplyIndividualSpawnChanceSettings(spawner);
+                    break;
+                }
+            }
         }
     }
 
@@ -249,7 +532,7 @@ public class BetterLoot_Component
         }
 
         nextDynamicOceanPatchAttempt =
-            Time.realtimeSinceStartup + 1f;
+            Time.realtimeSinceStartup + 10f;
 
         Type dynamicOceanType =
             AccessTools.TypeByName("DynamicOcean");
@@ -322,6 +605,9 @@ public class BetterLoot_Component
 
     private static bool DynamicOcean_SpawnRandomFlowItem_Prefix()
     {
+        if (BetterLootAndUnderwaterResources.EnableVanillaLootSystem)
+            return true;
+
         return !BetterLootAndUnderwaterResources.Check &&
                !float.IsPositiveInfinity(
                    BetterLootAndUnderwaterResources.Delay
@@ -331,6 +617,9 @@ public class BetterLoot_Component
     private static void DynamicOcean_GetSpawnInterval_Postfix(
         ref float __result)
     {
+        if (BetterLootAndUnderwaterResources.EnableVanillaLootSystem)
+            return;
+
         if (BetterLootAndUnderwaterResources.Check ||
             float.IsPositiveInfinity(
                 BetterLootAndUnderwaterResources.Delay
@@ -362,7 +651,7 @@ public class BetterLoot_Component
     {
         result = Vector3.zero;
 
-        if (spawner == null)
+        if (BetterLootAndUnderwaterResources.EnableVanillaLootSystem || spawner == null)
             return false;
 
         Transform spawnerTransform =
@@ -476,8 +765,18 @@ public class BetterLoot_Component
 [HarmonyPatch(typeof(SO_ObjectSpawner), "GetSettings")]
 public class Patch_GetObjectSpawnerSettings
 {
+    private static float nextRefreshTime;
+
     static void Postfix()
     {
+        if (BetterLootAndUnderwaterResources.EnableVanillaLootSystem)
+            return;
+
+        float now = Time.realtimeSinceStartup;
+        if (now < nextRefreshTime)
+            return;
+
+        nextRefreshTime = now + 2f;
         BetterLoot_Component.scheduleCheck = true;
     }
 }
@@ -495,6 +794,7 @@ public static class BetterLoot_RaftTravelSpawnContext
 
     [ThreadStatic]
     private static uint pendingSpawnerIndex;
+
 
     public static bool Active
     {
@@ -559,15 +859,23 @@ public static class BetterLoot_RaftTravelSpawnContext
 )]
 public class Patch_ObjectSpawner_RaftDirection_SpawnNewItems
 {
-    static void Prefix()
+    static bool Prefix(ObjectSpawner_RaftDirection __instance, ref bool __state)
     {
-        BetterLoot_RaftTravelSpawnContext.Enter();
+        bool vanilla = BetterLootAndUnderwaterResources.EnableVanillaLootSystem;
+        bool allowed = vanilla || !BetterLootAndUnderwaterResources.Check;
+        __state = allowed && !vanilla;
+        BetterLoot_Component.RecordBatchCall(__instance, allowed);
+        if (__state)
+            BetterLoot_RaftTravelSpawnContext.Enter();
+        return allowed;
     }
 
     static Exception Finalizer(
-        Exception __exception)
+        Exception __exception,
+        bool __state)
     {
-        BetterLoot_RaftTravelSpawnContext.Exit();
+        if (__state)
+            BetterLoot_RaftTravelSpawnContext.Exit();
         return __exception;
     }
 }
@@ -600,8 +908,11 @@ public class Patch_ObjectSpawner_SpawnItem
         ObjectSpawner __instance,
         ref Vector3 position)
     {
-        if (!BetterLoot_RaftTravelSpawnContext.Active)
+        if (BetterLootAndUnderwaterResources.EnableVanillaLootSystem ||
+            !BetterLoot_RaftTravelSpawnContext.Active)
             return;
+
+        BetterLoot_Component.RecordItemCall(__instance);
 
         ObjectSpawnerManager manager =
             ComponentManager<ObjectSpawnerManager>.Value;
